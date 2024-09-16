@@ -3,8 +3,8 @@ package com.fahim.mapapp;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Location;
-import android.location.LocationListener;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -12,6 +12,11 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 
 import com.fahim.mapapp.databinding.ActivityMapsBinding;
+import com.fahim.mapapp.service.LocationBroadCastReceiver;
+import com.fahim.mapapp.service.LocationService;
+import com.google.android.gms.location.LocationAvailability;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -23,7 +28,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
-    private Location location;
     private double latitude = -31, longitude = 151;
 
     public static void getInstance(Context context) {
@@ -31,6 +35,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     MarkerOptions marker = new MarkerOptions();
+    GpsUtil gpsUtil = new GpsUtil();
+    LocationCallback locationCallback;
+    LocationBroadCastReceiver locationReceiver = new LocationBroadCastReceiver();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,32 +53,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
 
 
-        location = GpsUtil.getLocation(this, new LocationListener() {
+
+        locationCallback = new LocationCallback(){
             @Override
-            public void onLocationChanged(@NonNull Location location) {
-                Log.e("TAG", "getLatitude: " + location.getLatitude());
-                Log.e("TAG", "getLongitude: " + location.getLongitude());
+            public void onLocationAvailability(@NonNull LocationAvailability locationAvailability) {
+                super.onLocationAvailability(locationAvailability);
+            }
+
+            @Override
+            public void onLocationResult(@NonNull LocationResult locationResult) {
+                super.onLocationResult(locationResult);
+                Log.e("TAG", "onLocationResult: ");
+                Location location = locationResult.getLastLocation();
                 latitude = location.getLatitude();
                 longitude = location.getLongitude();
                 LatLng latLng = new LatLng(latitude, longitude);
                 marker.position(latLng)
                         .title("Your Location");
+                mMap.clear();
                 mMap.addMarker(marker);
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-               try {
-                   Log.e("TAG", "onStatusChanged: "+provider);
-                   LocationListener.super.onStatusChanged(provider, status, extras);
-               }catch (Exception e){
-                   e.printStackTrace();
-               }
 
             }
-        });
+        };
+
+//       gpsUtil.getLocation(this,locationCallback);
+        startService(new Intent(this, LocationService.class));
+
     }
+
 
 
     /**
@@ -95,5 +105,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.addMarker(marker.position(currentLocation).title("Current Location"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLocation));
 
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        locationReceiver.setCallBack(locationCallback);
+        registerReceiver(locationReceiver, new IntentFilter("LOCATION_UPDATE"));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(locationReceiver);
+    }
+
+    @Override
+    protected void onDestroy() {
+//        gpsUtil.closeLocationUpdates(locationCallback);
+//        stopService(new Intent(this, LocationService.class));
+        super.onDestroy();
     }
 }
