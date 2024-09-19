@@ -6,7 +6,9 @@ import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
@@ -26,16 +28,35 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class LocationService extends Service {
 
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationRequest locationRequest;
     private LocationCallback locationCallback;
+    private String deviceId;
+
+    public static void getInstance(Context context, String deviceId) {
+        Intent serviceIntent = new Intent(context, LocationService.class);
+        serviceIntent.putExtra("deviceId", deviceId);
+        context.startService(serviceIntent);
+
+    }
+
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+    DatabaseReference myRef = database.getReference("devices");
+    Map<String, Object> locationData = new HashMap<>();
+    Map<String, Object> deviceLocation = new HashMap<>();
 
     @Override
     public void onCreate() {
         super.onCreate();
+
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000)
@@ -52,17 +73,22 @@ public class LocationService extends Service {
             public void onLocationResult(@NonNull LocationResult locationResult) {
                 Location location = locationResult.getLastLocation();
                 if (location != null) {
+                    Log.e("TAG", "service:onLocationResult " + location.getProvider() + location.getLatitude() + "-" + location.getLongitude());
                     createNotification(String.valueOf(location.getLatitude()), String.valueOf(location.getLongitude()));
-                    updateMap(locationResult, location);
+                    updateToFirebase(String.valueOf(location.getLatitude()), String.valueOf(location.getLongitude()));
+                    sendBroadcast(new Intent("LOCATION_UPDATE"));
                 }
             }
         };
     }
 
-    private void updateMap(@NonNull LocationResult locationResult, Location location) {
-        Intent intent = new Intent("LOCATION_UPDATE");
-        intent.putExtra("result", locationResult);
-        sendBroadcast(intent);
+    private void updateToFirebase(String latitude, String longitude) {
+
+        locationData.put("latitude", latitude);
+        locationData.put("longitude", longitude);
+        deviceLocation.put(deviceId, locationData);
+        myRef.updateChildren(deviceLocation);
+
     }
 
     @Override
@@ -71,6 +97,7 @@ public class LocationService extends Service {
             stopSelf(); // Stop the service
             return START_NOT_STICKY;
         } else {
+            deviceId = intent.getStringExtra("deviceId");
             locationUpdates();
             return START_STICKY;
         }
@@ -91,17 +118,17 @@ public class LocationService extends Service {
     @SuppressLint("MissingPermission")
     private void createNotification(String lat, String lng) {
         Intent stopServiceIntent = new Intent(this, LocationService.class);
-        stopServiceIntent.setAction("STOP_SERVICE"); // Set an action to identify this intent
+        stopServiceIntent.setAction("STOP_SERVICE");
         PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopServiceIntent, PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Action stopAction = new NotificationCompat.Action.Builder(
-                R.drawable.ic_launcher_background,
+                android.R.drawable.ic_notification_clear_all,
                 "Stop Service",
                 stopPendingIntent)
                 .build();
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_launcher_background)
+                .setSmallIcon(android.R.drawable.ic_menu_mylocation)
                 .setContentTitle("Latitude and Longitude")
                 .setContentText(lat + " - " + lng)
                 .addAction(stopAction)
@@ -120,5 +147,6 @@ public class LocationService extends Service {
         super.onDestroy();
         Log.e("TAG", "service destroyed: ");
         stopForeground(STOP_FOREGROUND_REMOVE);
+        fusedLocationProviderClient.removeLocationUpdates(locationCallback);
     }
 }

@@ -3,8 +3,6 @@ package com.fahim.mapapp;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -12,32 +10,30 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentActivity;
 
 import com.fahim.mapapp.databinding.ActivityMapsBinding;
-import com.fahim.mapapp.service.LocationBroadCastReceiver;
-import com.fahim.mapapp.service.LocationService;
-import com.google.android.gms.location.LocationAvailability;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private ActivityMapsBinding binding;
     private double latitude = -31, longitude = 151;
+    private String selectedDeviceId;
 
-    public static void getInstance(Context context) {
-        context.startActivity(new Intent(context, MapsActivity.class));
+    public static void getInstance(Context context, String selectedDeviceId) {
+        context.startActivity(new Intent(context, MapsActivity.class).putExtra("selectedDeviceId", selectedDeviceId));
     }
 
     MarkerOptions marker = new MarkerOptions();
-    GpsUtil gpsUtil = new GpsUtil();
-    LocationCallback locationCallback;
-    LocationBroadCastReceiver locationReceiver = new LocationBroadCastReceiver();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,43 +41,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         binding = ActivityMapsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        Log.e("TAG", ": oncreaete");
+        selectedDeviceId = getIntent().getStringExtra("selectedDeviceId");
+        Log.e("TAG", "onCreate: " + selectedDeviceId);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-
-
-        locationCallback = new LocationCallback(){
-            @Override
-            public void onLocationAvailability(@NonNull LocationAvailability locationAvailability) {
-                super.onLocationAvailability(locationAvailability);
-            }
-
-            @Override
-            public void onLocationResult(@NonNull LocationResult locationResult) {
-                super.onLocationResult(locationResult);
-                Log.e("TAG", "onLocationResult: ");
-                Location location = locationResult.getLastLocation();
-                latitude = location.getLatitude();
-                longitude = location.getLongitude();
-                LatLng latLng = new LatLng(latitude, longitude);
-                marker.position(latLng)
-                        .title("Your Location");
-                mMap.clear();
-                mMap.addMarker(marker);
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
-
-            }
-        };
-
-//       gpsUtil.getLocation(this,locationCallback);
-        startService(new Intent(this, LocationService.class));
-
     }
 
+    private void updateMap() {
+        LatLng latLng = new LatLng(latitude, longitude);
+        marker.position(latLng)
+                .title("Your Location");
+        mMap.clear();
+        mMap.addMarker(marker);
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+    }
 
 
     /**
@@ -106,23 +83,37 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.newLatLng(currentLocation));
 
     }
+
     @Override
     protected void onResume() {
         super.onResume();
-        locationReceiver.setCallBack(locationCallback);
-        registerReceiver(locationReceiver, new IntentFilter("LOCATION_UPDATE"));
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("devices").child(selectedDeviceId);
+
+        myRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                String latitude = dataSnapshot.child("latitude").getValue(String.class);
+                String longitude = dataSnapshot.child("longitude").getValue(String.class);
+                Log.e("TAG", "onDataChange: " + latitude);
+                Log.e("TAG", "onDataChange: " + longitude);
+
+                // Do something with the latitude and longitude values
+                if (latitude != null && longitude != null) {
+                    // Update UI, perform calculations, etc.
+                    MapsActivity.this.latitude = Double.parseDouble(latitude);
+                    MapsActivity.this.longitude = Double.parseDouble(longitude);
+                    updateMap();
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle any errors
+            }
+        });
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver(locationReceiver);
-    }
 
-    @Override
-    protected void onDestroy() {
-//        gpsUtil.closeLocationUpdates(locationCallback);
-//        stopService(new Intent(this, LocationService.class));
-        super.onDestroy();
-    }
 }
