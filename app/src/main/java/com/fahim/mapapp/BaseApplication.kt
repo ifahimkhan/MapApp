@@ -1,27 +1,29 @@
-package com.fahim.mapapp;
+package com.fahim.mapapp
 
-import android.app.Application;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.content.Context;
-import android.os.Build;
+import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
 
-public class BaseApplication extends Application {
-    public static final String CHANNEL_ID = "channel_id";
-    public static final String CHANNEL_NAME = "Channel Name";
+class BaseApplication : Application() {
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
+    companion object {
+        const val CHANNEL_ID = "channel_id"
+        const val CHANNEL_NAME = "Channel Name"
+    }
+
+    override fun onCreate() {
+        super.onCreate()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID,
-                    CHANNEL_NAME,
-                    NotificationManager.IMPORTANCE_DEFAULT
-            );
-            NotificationManager notificationManager =
-                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            notificationManager.createNotificationChannel(channel);
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            val notificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
         }
     }
 }
