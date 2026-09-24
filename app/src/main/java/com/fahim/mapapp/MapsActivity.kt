@@ -124,17 +124,27 @@ fun MapsScreen(
 
             val listener = object : ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    val latStr = dataSnapshot.child("latitude").getValue(String::class.java)
-                    val lngStr = dataSnapshot.child("longitude").getValue(String::class.java)
-                    Log.e("TAG", "onDataChange: lat=$latStr, lng=$lngStr")
+                    // Try to get values as Double first, then fallback to String if necessary
+                    val latVal = dataSnapshot.child("latitude").value
+                    val lngVal = dataSnapshot.child("longitude").value
+                    
+                    Log.e("TAG", "onDataChange: lat=$latVal, lng=$lngVal")
 
-                    if (latStr != null && lngStr != null) {
-                        try {
-                            latitude = latStr.toDouble()
-                            longitude = lngStr.toDouble()
-                        } catch (e: NumberFormatException) {
-                            Log.e("TAG", "Invalid coordinates: $e")
-                        }
+                    val newLat = when (latVal) {
+                        is Number -> latVal.toDouble()
+                        is String -> latVal.toDoubleOrNull()
+                        else -> null
+                    }
+                    
+                    val newLng = when (lngVal) {
+                        is Number -> lngVal.toDouble()
+                        is String -> lngVal.toDoubleOrNull()
+                        else -> null
+                    }
+
+                    if (newLat != null && newLng != null) {
+                        latitude = newLat
+                        longitude = newLng
                     }
                 }
 

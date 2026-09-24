@@ -130,6 +130,7 @@ class MainActivity : ComponentActivity() {
                         LocationService.getInstance(this@MainActivity, deviceId)
                         sendBroadcast(Intent(LocationService.ACTION_LOCATION_UPDATE))
                         disableStartButton()
+                        MapsActivity.getInstance(this@MainActivity, deviceId)
                     },
                     onDeviceSelected = { deviceId ->
                         Log.e(tag, "selected: $deviceId")

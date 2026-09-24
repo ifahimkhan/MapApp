@@ -74,14 +74,14 @@ class LocationService : Service() {
                         "service:onLocationResult ${location.provider}${location.latitude}-${location.longitude}"
                     )
                     createNotification(location.latitude.toString(), location.longitude.toString())
-                    updateToFirebase(location.latitude.toString(), location.longitude.toString())
+                    updateToFirebase(location.latitude, location.longitude)
                     sendBroadcast(Intent(ACTION_LOCATION_UPDATE))
                 }
             }
         }
     }
 
-    private fun updateToFirebase(latitude: String, longitude: String) {
+    private fun updateToFirebase(latitude: Double, longitude: Double) {
         val id = deviceId ?: return
         locationData["latitude"] = latitude
         locationData["longitude"] = longitude
