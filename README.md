@@ -87,6 +87,10 @@ Or open the project in Android Studio and press **Run**.
 | `POST_NOTIFICATIONS` | Show tracking notification (Android 13+) |
 | `INTERNET` | Sync with Firebase and load map tiles |
 
+## License
+
+Licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
 ## Author
 
 [Fahim Khan](https://github.com/ifahimkhan)
