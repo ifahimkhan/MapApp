@@ -1,6 +1,7 @@
 package com.fahim.mapapp
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -119,6 +120,7 @@ class MainActivity : ComponentActivity() {
         isStartButtonEnabledState = false
     }
 
+    @SuppressLint("UnsafeImplicitIntentLaunch")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -147,7 +149,7 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(locationBroadCastReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
         } else {
-            registerReceiver(locationBroadCastReceiver, filter)
+            registerReceiver(locationBroadCastReceiver, filter,Context.RECEIVER_NOT_EXPORTED)
         }
     }
 

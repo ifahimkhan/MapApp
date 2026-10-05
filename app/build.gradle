@@ -63,7 +63,10 @@ dependencies {
     implementation libs.play.services.maps
     implementation libs.play.services.location
     implementation libs.firebase.database
+    implementation libs.firebase.messaging
     implementation libs.maps.compose
+    implementation libs.firebase.inappmessaging.display
+    implementation libs.firebase.analytics
 
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
