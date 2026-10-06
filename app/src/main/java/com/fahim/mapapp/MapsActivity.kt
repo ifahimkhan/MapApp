@@ -171,6 +171,46 @@ fun MapsScreen(
         Manifest.permission.ACCESS_COARSE_LOCATION
     ) == PackageManager.PERMISSION_GRANTED
 
+    MapsScreenContent(
+        selectedDeviceId = selectedDeviceId,
+        latitude = latitude,
+        longitude = longitude,
+        onBackClick = onBackClick
+    ) {
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
+            properties = MapProperties(
+                isMyLocationEnabled = hasLocationPermission
+            ),
+            uiSettings = MapUiSettings(
+                myLocationButtonEnabled = true,
+                zoomControlsEnabled = true,
+                compassEnabled = true
+            )
+        ) {
+            Marker(
+                state = markerState,
+                title = if (selectedDeviceId.isNotEmpty()) "Device: $selectedDeviceId" else "Current Location",
+                snippet = "Lat: %.4f, Lng: %.4f".format(latitude, longitude)
+            )
+        }
+    }
+}
+
+/**
+ * Stateless map screen layout. [mapContent] fills the area behind the coordinates card;
+ * the real screen passes a [GoogleMap], previews pass a placeholder.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MapsScreenContent(
+    selectedDeviceId: String,
+    latitude: Double,
+    longitude: Double,
+    onBackClick: () -> Unit,
+    mapContent: @Composable () -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -200,24 +240,7 @@ fun MapsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                properties = MapProperties(
-                    isMyLocationEnabled = hasLocationPermission
-                ),
-                uiSettings = MapUiSettings(
-                    myLocationButtonEnabled = true,
-                    zoomControlsEnabled = true,
-                    compassEnabled = true
-                )
-            ) {
-                Marker(
-                    state = markerState,
-                    title = if (selectedDeviceId.isNotEmpty()) "Device: $selectedDeviceId" else "Current Location",
-                    snippet = "Lat: %.4f, Lng: %.4f".format(latitude, longitude)
-                )
-            }
+            mapContent()
 
             // Overlay card displaying coordinates
             Card(

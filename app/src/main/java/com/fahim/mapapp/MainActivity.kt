@@ -436,6 +436,24 @@ fun DeviceListDialog(
         })
     }
 
+    DeviceListDialogContent(
+        devices = devices,
+        isLoading = isLoading,
+        errorMessage = errorMessage,
+        onDismiss = onDismiss,
+        onDeviceSelected = onDeviceSelected
+    )
+}
+
+/** Stateless device picker UI, separated from Firebase loading so it can be previewed. */
+@Composable
+fun DeviceListDialogContent(
+    devices: List<String>,
+    isLoading: Boolean,
+    errorMessage: String?,
+    onDismiss: () -> Unit,
+    onDeviceSelected: (String) -> Unit
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Select a Device") },
