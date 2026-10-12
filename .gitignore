@@ -16,3 +16,5 @@ local.properties
 
 # Firebase config (contains project keys)
 google-services.json
+
+.env

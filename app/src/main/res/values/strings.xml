@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">MapApp</string>
-    <string name="title_activity_maps">MapsActivity</string>
+    <string name="title_activity_maps">Live Session</string>
 </resources>
