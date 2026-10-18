@@ -2,6 +2,23 @@
 
 Android app that shares a device's live GPS location through Firebase Realtime Database and shows any broadcasting device on a Google Map. Built with Kotlin and Jetpack Compose.
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/tracker-idle.png" width="220" alt="Tracker screen, idle"/><br/><sub>Tracker — idle</sub></td>
+    <td align="center"><img src="docs/screenshots/device-id-dialog.png" width="220" alt="Device ID dialog"/><br/><sub>Broadcast as…</sub></td>
+    <td align="center"><img src="docs/screenshots/tracker-live.png" width="220" alt="Tracker screen, transmitting"/><br/><sub>Tracker — transmitting</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/devices.png" width="220" alt="Device picker"/><br/><sub>Select a device</sub></td>
+    <td align="center"><img src="docs/screenshots/live-session.png" width="220" alt="Live session"/><br/><sub>Live session</sub></td>
+    <td></td>
+  </tr>
+</table>
+
+> Rendered from the Compose `@Preview`s in `ScreenPreviews.kt`; the live map is replaced by a placeholder.
+
 ## Features
 
 - **Start tracking** — enter a device ID; a foreground service pushes the device's location to Firebase every ~10 seconds.
